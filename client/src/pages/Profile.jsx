@@ -264,7 +264,7 @@ export default function Profile() {
               <FieldGroup
                 label="Compétences"
                 htmlFor="competences"
-                hint="Appuie sur Entrée après chaque compétence."
+                hint="Sépare-les par des virgules, ou appuie sur Entrée après chacune."
                 done={CRITERIA[2].done(form)}
               >
                 <TagInput

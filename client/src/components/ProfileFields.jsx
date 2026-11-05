@@ -192,14 +192,27 @@ export function TagInput({ id, value, onChange, suggestions = [], max = 20, plac
   const [draft, setDraft] = useState('');
   const has = (t) => value.some((v) => v.toLowerCase() === t.toLowerCase());
 
+  // Seule la virgule sépare les compétences : « web,design, html » donne 3 pastilles,
+  // « développement-front » en reste une seule. Tout est ajouté en une fois, sans doublon.
   function add(raw) {
-    const tag = raw.trim().replace(/,$/, '').slice(0, 40);
-    if (!tag || has(tag) || value.length >= max) return;
-    onChange([...value, tag]);
+    const next = [...value];
+    for (const part of raw.split(',')) {
+      const tag = part.trim().slice(0, 40);
+      if (tag && next.length < max && !next.some((v) => v.toLowerCase() === tag.toLowerCase())) next.push(tag);
+    }
+    if (next.length !== value.length) onChange(next);
+  }
+
+  // Une virgule tapée ou collée valide tout ce qui la précède ; le reste reste en cours de saisie
+  function handleChange(text) {
+    if (!text.includes(',')) return setDraft(text);
+    const cut = text.lastIndexOf(',');
+    add(text.slice(0, cut));
+    setDraft(text.slice(cut + 1).trimStart());
   }
 
   function handleKeyDown(e) {
-    if (e.key === 'Enter' || e.key === ',') {
+    if (e.key === 'Enter') {
       e.preventDefault();
       add(draft);
       setDraft('');
@@ -232,7 +245,7 @@ export function TagInput({ id, value, onChange, suggestions = [], max = 20, plac
         <input
           id={id}
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={() => {
             add(draft);
