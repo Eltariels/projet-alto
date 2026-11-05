@@ -13,6 +13,10 @@ import { notFound, errorHandler } from './middleware/error.js';
 export function createApp() {
   const app = express();
 
+  // Derrière le proxy de Vercel, l'adresse réelle du visiteur est dans X-Forwarded-For :
+  // indispensable pour que la limitation des tentatives ne compte pas tout le monde comme une seule IP
+  if (env.isVercel || env.isProd) app.set('trust proxy', 1);
+
   app.use(helmet());
   app.use(cors({ origin: env.clientOrigin, credentials: true }));
   app.use(express.json({ limit: '1mb' }));

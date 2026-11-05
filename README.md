@@ -56,7 +56,7 @@ server/            Express + Mongoose
 | POST    | `/api/auth/forgot-password` | public (même réponse que le compte existe ou non) |
 | POST    | `/api/auth/reset-password`  | public (`token` reçu par e-mail, valable 1 h, usage unique) |
 | GET/PUT | `/api/profile`       | connecté        |
-| POST/GET/DELETE | `/api/profile/cv` | connecté (CV PDF, 5 Mo max, champ `cv`) |
+| POST/GET/DELETE | `/api/profile/cv` | connecté (CV PDF, 4 Mo max, champ `cv`) |
 | GET     | `/api/offers`        | connecté (`q`, `secteur`, `ville`, `niveau`, `rythme`, `tri=score\|date`, `favoris=1`, `page`) |
 | GET     | `/api/offers/:id`    | connecté (score détaillé + 3 offres proches) |
 | PUT/DELETE | `/api/offers/:id/favori` | connecté |
@@ -84,8 +84,38 @@ vérifié chez le fournisseur.
 
 ## Fichiers déposés
 
-Les CV sont stockés dans `server/uploads/` (ignoré par Git). À chaque candidature, une copie du CV est gardée
-dans `server/uploads/candidatures/` : remplacer son CV ne modifie pas une candidature déjà envoyée.
+Les CV (PDF, 4 Mo max) sont stockés **dans MongoDB** (GridFS, collections `cv.files` et `cv.chunks`), pas sur le
+disque : ça marche aussi sur un hébergement sans disque durable comme Vercel. À chaque candidature, une copie
+indépendante du CV est gardée : remplacer son CV ne modifie pas une candidature déjà envoyée.
+
+## Déployer sur Vercel
+
+Le dépôt est prêt : `vercel.json` construit le front (`client/dist`) et `api/index.js` sert toute l'API
+`/api/*` sous forme de fonction serverless, sur le même domaine que le site (le cookie de session marche sans
+réglage CORS).
+
+1. **Base de données** : créer un cluster gratuit sur [MongoDB Atlas](https://www.mongodb.com/atlas)
+   (offre M0), un utilisateur de base, et autoriser l'accès réseau depuis `0.0.0.0/0` (Vercel n'a pas d'IP fixe).
+   Récupérer l'URI `mongodb+srv://…` en ajoutant le nom de base `/alto`.
+2. **Vercel** : *Add New → Project*, importer le dépôt GitHub, garder les réglages proposés (ils viennent de
+   `vercel.json`).
+3. **Variables d'environnement** (*Settings → Environment Variables*) :
+
+   | Variable | Valeur |
+   |---|---|
+   | `MONGO_URI` | l'URI Atlas |
+   | `JWT_SECRET` | 64 caractères aléatoires : `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+   | `NODE_ENV` | `production` |
+   | `SMTP_URL`, `MAIL_FROM` | ceux du fournisseur d'e-mails (Brevo…), sinon les e-mails ne partent pas |
+   | `CLIENT_ORIGIN` | facultatif : l'adresse du site si vous utilisez un domaine personnalisé |
+
+4. **Offres de démonstration** : depuis un poste, lancer le seed vers Atlas, une fois :
+   `MONGO_URI="mongodb+srv://…/alto" npm run seed -w server`
+5. *Deploy*. Chaque `git push` sur `main` redéploie ensuite automatiquement.
+
+Limites connues sur Vercel : le compteur de tentatives de connexion est propre à chaque instance de la fonction
+(protection réelle mais approximative), et une requête ne peut pas dépasser 4,5 Mo (d'où la limite de 4 Mo
+pour les CV).
 
 ## Score et badges
 

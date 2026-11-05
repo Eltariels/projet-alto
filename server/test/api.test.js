@@ -39,6 +39,14 @@ function client() {
     put: (p, b) => call('PUT', p, b),
     patch: (p, b) => call('PATCH', p, b),
     del: (p) => call('DELETE', p),
+    // Envoi de fichier (multipart) et téléchargement brut
+    upload: async (p, field, content, filename) => {
+      const fd = new FormData();
+      fd.append(field, new Blob([content], { type: 'application/pdf' }), filename);
+      const res = await fetch(base + p, { method: 'POST', headers: { cookie }, body: fd });
+      return { status: res.status, data: await res.json() };
+    },
+    raw: (p) => fetch(base + p, { headers: { cookie } }),
   };
 }
 
@@ -228,6 +236,42 @@ describe('offres', () => {
     const { data } = await c.get(`/api/offers/${ids['Développeur web']}`);
     assert.ok(data.similar.length <= 3);
     assert.ok(data.similar.every((o) => o.badge !== 'suspecte' && o.id !== ids['Développeur web']));
+  });
+});
+
+describe('CV (stocké dans MongoDB)', () => {
+  const PDF = '%PDF-1.4\n1 0 obj<<>>endobj\n%%EOF\n';
+
+  test('dépôt, téléchargement identique, remplacement et suppression', async () => {
+    const { c } = await student();
+    const up = await c.upload('/api/profile/cv', 'cv', PDF, 'CV Léa.pdf');
+    assert.equal(up.status, 201);
+    assert.equal(up.data.cv.name, 'CV Léa.pdf');
+
+    const dl = await c.raw('/api/profile/cv');
+    assert.equal(dl.headers.get('content-type'), 'application/pdf');
+    assert.equal(await dl.text(), PDF);
+
+    await c.upload('/api/profile/cv', 'cv', PDF.replace('1.4', '1.7'), 'v2.pdf');
+    assert.ok((await (await c.raw('/api/profile/cv')).text()).includes('1.7'));
+    assert.equal(await mongoose.connection.db.collection('cv.files').countDocuments({ 'metadata.kind': 'profil' }), 1 + 0, 'l’ancien CV est supprimé');
+
+    assert.equal((await c.del('/api/profile/cv')).data.cv, null);
+    assert.equal((await c.raw('/api/profile/cv')).status, 404);
+  });
+
+  test('un fichier qui n’est pas un PDF est refusé', async () => {
+    const { c } = await student();
+    assert.equal((await c.upload('/api/profile/cv', 'cv', 'bonjour', 'faux.pdf')).status, 400);
+  });
+
+  test('la candidature garde sa propre copie du CV', async () => {
+    const { c } = await student(PROFIL);
+    await c.upload('/api/profile/cv', 'cv', PDF, 'cv.pdf');
+    await c.post('/api/applications', { offerId: ids['Data analyst'] });
+    await c.del('/api/profile/cv');
+    const copies = await mongoose.connection.db.collection('cv.files').countDocuments({ 'metadata.kind': 'candidature' });
+    assert.equal(copies, 1);
   });
 });
 

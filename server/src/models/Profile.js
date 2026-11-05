@@ -3,7 +3,7 @@ import { NIVEAUX } from './constants.js';
 
 const cvSchema = new mongoose.Schema(
   {
-    storedName: { type: String, required: true }, // nom du fichier sur le disque
+    fileId: { type: mongoose.Schema.Types.ObjectId, required: true }, // fichier GridFS (bucket « cv »)
     originalName: { type: String, required: true },
     size: { type: Number, required: true },
     uploadedAt: { type: Date, default: Date.now },

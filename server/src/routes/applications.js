@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
-import { copyFile } from 'node:fs/promises';
-import path from 'node:path';
-import { APPLICATION_CV_DIR, CV_DIR } from '../utils/files.js';
+import { copyFile } from '../utils/files.js';
 import { z } from 'zod';
 import { Application, APPLICATION_STATUSES, Event, Offer, Profile, User } from '../models/index.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
@@ -74,10 +72,9 @@ router.post('/', async (req, res) => {
   });
 
   // Copie du CV au moment de l'envoi : remplacer son CV plus tard ne modifie pas une candidature déjà partie
-  if (profile.cv?.storedName) {
-    const storedName = `${app._id}.pdf`;
-    await copyFile(path.join(CV_DIR, profile.cv.storedName), path.join(APPLICATION_CV_DIR, storedName));
-    app.profileSnapshot.cv = { storedName, originalName: profile.cv.originalName, size: profile.cv.size };
+  if (profile.cv?.fileId) {
+    const fileId = await copyFile(profile.cv.fileId, profile.cv.originalName, { application: app._id, kind: 'candidature' });
+    app.profileSnapshot.cv = { fileId, originalName: profile.cv.originalName, size: profile.cv.size };
   }
   await app.save();
 

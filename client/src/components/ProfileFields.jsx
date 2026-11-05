@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { api } from '../lib/api.js';
 import { CrossIcon, FileIcon, SpinnerIcon } from './Icons.jsx';
 
-const CV_MAX = 5 * 1024 * 1024;
+const CV_MAX = 4 * 1024 * 1024; // limite de Vercel : 4,5 Mo par requête
 
 const formatSize = (bytes) =>
   bytes < 1024 * 1024
@@ -20,7 +20,7 @@ export function CvUpload({ cv, onChange }) {
     setError('');
     if (!file) return;
     if (file.type && file.type !== 'application/pdf') return setError('Choisis un fichier PDF.');
-    if (file.size > CV_MAX) return setError('Fichier trop lourd : 5 Mo maximum.');
+    if (file.size > CV_MAX) return setError('Fichier trop lourd : 4 Mo maximum.');
     const fd = new FormData();
     fd.append('cv', file);
     setBusy(true);
@@ -126,7 +126,7 @@ export function CvUpload({ cv, onChange }) {
           <span className="text-sm font-semibold text-night">
             {busy ? 'Envoi du CV…' : 'Dépose ton CV ici ou choisis un fichier'}
           </span>
-          <span className="text-xs text-ink-soft">PDF uniquement, 5 Mo maximum</span>
+          <span className="text-xs text-ink-soft">PDF uniquement, 4 Mo maximum</span>
           {picker}
         </label>
       )}

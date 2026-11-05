@@ -19,7 +19,11 @@ export const env = {
   mongoUri: process.env.MONGO_URI,
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  // Adresse publique du site (liens des e-mails, CORS). Sur Vercel, déduite du domaine de production.
+  clientOrigin:
+    process.env.CLIENT_ORIGIN ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:5173'),
+  isVercel: Boolean(process.env.VERCEL),
   // Envoi d'e-mails : sans SMTP_URL, les e-mails sont affichés dans la console (développement)
   smtpUrl: process.env.SMTP_URL || '',
   mailFrom: process.env.MAIL_FROM || 'ALTO <no-reply@alto.local>',

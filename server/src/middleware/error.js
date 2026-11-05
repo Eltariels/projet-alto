@@ -11,7 +11,7 @@ export function errorHandler(err, req, res, next) {
     return res.status(400).json({ error: 'Données invalides', details: err.issues });
   }
   if (err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(400).json({ error: 'Fichier trop lourd : 5 Mo maximum' });
+    return res.status(400).json({ error: 'Fichier trop lourd : 4 Mo maximum' });
   }
   if (err.code === 'LIMIT_UNEXPECTED_FILE' || err.code === 'LIMIT_FILE_COUNT') {
     return res.status(400).json({ error: 'Un seul fichier PDF est accepté' });

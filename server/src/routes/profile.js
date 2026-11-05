@@ -1,14 +1,11 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { randomUUID } from 'node:crypto';
-import { unlink, writeFile } from 'node:fs/promises';
-import path from 'node:path';
 import { z } from 'zod';
 import { Event, NIVEAUX, Profile, User } from '../models/index.js';
 import { requireAuth } from '../middleware/auth.js';
 import { trackEvent } from '../utils/events.js';
 import { HttpError } from '../utils/httpError.js';
-import { CV_DIR, CV_MAX_BYTES, isPdf, safeName } from '../utils/files.js';
+import { CV_MAX_BYTES, deleteFile, isPdf, openFile, safeName, saveFile } from '../utils/files.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -59,7 +56,8 @@ function toPublic(p) {
     adresse: p?.adresse || '',
     cvWebUrl: p?.cvWebUrl || '',
   };
-  const cv = p?.cv ? { name: p.cv.originalName, size: p.cv.size, uploadedAt: p.cv.uploadedAt } : null;
+  // Un CV sans fileId vient de l'ancien stockage sur disque : on le considère absent
+  const cv = p?.cv?.fileId ? { name: p.cv.originalName, size: p.cv.size, uploadedAt: p.cv.uploadedAt } : null;
   return { profile, cv, complete: isComplete(profile), updatedAt: p?.updatedAt || null };
 }
 
@@ -93,33 +91,34 @@ router.post('/cv', upload.single('cv'), async (req, res) => {
   if (!isPdf(req.file.buffer)) throw new HttpError(400, 'Le CV doit être un fichier PDF');
 
   // Multer décode le nom en latin1 : on le remet en UTF-8 pour garder les accents
-  const originalName = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
-  const storedName = `${req.auth.userId}-${randomUUID()}.pdf`;
-  await writeFile(path.join(CV_DIR, storedName), req.file.buffer);
+  const originalName = safeName(Buffer.from(req.file.originalname, 'latin1').toString('utf8'));
+  const fileId = await saveFile(req.file.buffer, originalName, { user: req.auth.userId, kind: 'profil' });
 
   const previous = await Profile.findOne({ user: req.auth.userId }).select('cv');
   const profile = await Profile.findOneAndUpdate(
     { user: req.auth.userId },
-    { $set: { cv: { storedName, originalName: safeName(originalName), size: req.file.size, uploadedAt: new Date() } } },
+    { $set: { cv: { fileId, originalName, size: req.file.size, uploadedAt: new Date() } } },
     { new: true, upsert: true },
   );
-  if (previous?.cv?.storedName) await unlink(path.join(CV_DIR, previous.cv.storedName)).catch(() => {});
+  await deleteFile(previous?.cv?.fileId);
 
   res.status(201).json(toPublic(profile));
 });
 
 router.get('/cv', async (req, res) => {
   const profile = await Profile.findOne({ user: req.auth.userId }).select('cv');
-  if (!profile?.cv) throw new HttpError(404, 'Aucun CV déposé');
-  res.download(path.join(CV_DIR, profile.cv.storedName), profile.cv.originalName, {
-    headers: { 'Content-Type': 'application/pdf' },
-  });
+  if (!profile?.cv?.fileId) throw new HttpError(404, 'Aucun CV déposé');
+  res.type('application/pdf');
+  res.attachment(profile.cv.originalName);
+  openFile(profile.cv.fileId)
+    .on('error', () => res.status(404).end())
+    .pipe(res);
 });
 
 router.delete('/cv', async (req, res) => {
   const profile = await Profile.findOne({ user: req.auth.userId });
-  if (profile?.cv?.storedName) {
-    await unlink(path.join(CV_DIR, profile.cv.storedName)).catch(() => {});
+  if (profile?.cv) {
+    await deleteFile(profile.cv.fileId);
     profile.cv = null;
     await profile.save();
   }
