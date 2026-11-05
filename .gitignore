@@ -8,3 +8,7 @@ dist/
 
 # Configuration locale de l outil Claude Code (aperçu)
 .claude/
+
+# Fichiers d environnement locaux (adresses de bases, secrets), sauf l exemple
+.env.*
+!.env.example

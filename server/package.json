@@ -8,7 +8,8 @@
     "seed": "node --env-file-if-exists=.env src/scripts/seed.js",
     "kpi": "node --env-file-if-exists=.env src/scripts/kpi.js",
     "test": "node --env-file-if-exists=.env --test --test-concurrency=1 test/api.test.js",
-    "mail:test": "node --env-file-if-exists=.env src/scripts/mail-test.js"
+    "mail:test": "node --env-file-if-exists=.env src/scripts/mail-test.js",
+    "seed:atlas": "node --env-file-if-exists=.env --env-file=.env.atlas src/scripts/seed.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

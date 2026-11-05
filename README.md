@@ -109,8 +109,8 @@ réglage CORS).
    | `SMTP_URL`, `MAIL_FROM` | ceux du fournisseur d'e-mails (Brevo…), sinon les e-mails ne partent pas |
    | `CLIENT_ORIGIN` | facultatif : l'adresse du site si vous utilisez un domaine personnalisé |
 
-4. **Offres de démonstration** : depuis un poste, lancer le seed vers Atlas, une fois :
-   `MONGO_URI="mongodb+srv://…/alto" npm run seed -w server`
+4. **Offres de démonstration** : mettre l'adresse Atlas dans `server/.env.atlas` (ligne `MONGO_URI=…`, fichier
+   ignoré par Git), puis lancer une fois `npm run seed:atlas -w server`.
 5. *Deploy*. Chaque `git push` sur `main` redéploie ensuite automatiquement.
 
 Limites connues sur Vercel : le compteur de tentatives de connexion est propre à chaque instance de la fonction
