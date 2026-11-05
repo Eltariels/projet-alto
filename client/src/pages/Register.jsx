@@ -38,8 +38,8 @@ export default function Register() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Après inscription, on complète d'abord le profil
-  if (user) return <Navigate to="/profil" replace />;
+  // Après inscription : l'accueil
+  if (user) return <Navigate to="/" replace />;
 
   async function handleSubmit(e) {
     e.preventDefault();

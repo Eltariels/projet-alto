@@ -14,8 +14,8 @@ export default function Login() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Retour à la page demandée avant la connexion, sinon aux offres
-  if (user) return <Navigate to={state?.from || '/offres'} replace />;
+  // Après connexion : l'accueil, sauf si on avait été renvoyé ici depuis une page protégée (on y retourne)
+  if (user) return <Navigate to={state?.from || '/'} replace />;
 
   async function handleSubmit(e) {
     e.preventDefault();
