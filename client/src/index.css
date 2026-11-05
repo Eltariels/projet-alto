@@ -1,0 +1,207 @@
+@import 'tailwindcss';
+
+/* DA ALTO : parchemin, bleu nuit, émeraude et or */
+@theme {
+  --font-display: 'Cinzel', Georgia, serif;
+  --font-sans: 'Manrope', system-ui, sans-serif;
+
+  --color-parchment: #f5eddd;
+  --color-parchment-100: #fbf7ee;
+  --color-parchment-200: #ebdfc6;
+  --color-parchment-300: #dccaa6;
+
+  --color-night: #0f1b33;
+  --color-night-900: #0a1326;
+  --color-night-700: #1a2b4f;
+  --color-azure: #2d5e90;
+  --color-azure-light: #7fa9d4;
+
+  --color-emerald: #2e6d51;
+  --color-emerald-light: #6fb592;
+
+  --color-gold: #c9a23a;
+  --color-gold-light: #ead08a;
+  --color-gold-dark: #94701f;
+
+  --color-ink: #1c2333;
+  --color-ink-soft: #545c6d;
+
+  --color-ruby: #a3423a;
+  --color-ruby-light: #e08b80;
+
+  /* Alias utilisé par les pages pas encore restylées */
+  --color-brand: #2d5e90;
+  --color-brand-dark: #1a2b4f;
+
+  --animate-rise: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-float: float 7s ease-in-out infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scrollbar-color: var(--color-parchment-300) transparent;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Grands écrans et ultrawide : toute l'interface (en rem) grandit au lieu de flotter au centre */
+  @media (min-width: 1920px) {
+    html {
+      font-size: 112.5%;
+    }
+  }
+  @media (min-width: 2400px) {
+    html {
+      font-size: 125%;
+    }
+  }
+  @media (min-width: 3200px) {
+    html {
+      font-size: 150%;
+    }
+  }
+  main:focus {
+    outline: none;
+  }
+  body {
+    @apply bg-parchment font-sans text-ink antialiased;
+    /* Grain de papier très léger */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .27 0 0 0 0 .12 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: rgb(201 162 58 / 0.3);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .btn-gold {
+    @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-lg px-5 py-3 font-semibold text-night transition duration-200;
+    background: linear-gradient(180deg, var(--color-gold-light), var(--color-gold) 55%, var(--color-gold-dark));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      inset 0 -1px 0 rgb(0 0 0 / 0.15),
+      0 8px 20px -8px rgb(201 162 58 / 0.7);
+  }
+  /* Reflet qui balaie le bouton au survol */
+  .btn-gold::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.45) 50%, transparent 65%);
+    transform: translateX(-120%);
+    transition: transform 0.7s ease;
+  }
+  .btn-gold:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.5),
+      inset 0 -1px 0 rgb(0 0 0 / 0.15),
+      0 12px 26px -8px rgb(201 162 58 / 0.8);
+  }
+  .btn-gold:hover::after {
+    transform: translateX(120%);
+  }
+  .btn-gold:active {
+    transform: translateY(0);
+  }
+  .btn-gold:disabled {
+    @apply cursor-not-allowed opacity-60;
+    transform: none;
+  }
+
+  .btn-ghost-light {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-gold/35 bg-white/[0.03] px-5 py-3 font-semibold text-parchment transition duration-200 hover:border-gold/80 hover:bg-white/[0.07];
+  }
+
+  .btn-ghost-dark {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-night/15 bg-white/70 px-5 py-3 font-semibold text-night transition duration-200 hover:border-gold-dark hover:bg-white;
+  }
+
+  /* Carte parchemin avec un liseré or discret */
+  .card-parchment {
+    @apply rounded-2xl border border-parchment-300/80 bg-parchment-100;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.8),
+      0 1px 2px rgb(15 27 51 / 0.06),
+      0 18px 40px -24px rgb(15 27 51 / 0.45);
+  }
+
+  .text-gold-gradient {
+    background: linear-gradient(180deg, var(--color-gold-light) 10%, var(--color-gold) 55%, var(--color-gold-dark));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .bg-night-sky {
+    background:
+      radial-gradient(56rem 30rem at 85% -10%, rgb(45 94 144 / 0.5), transparent 60%),
+      radial-gradient(40rem 26rem at -10% 110%, rgb(46 109 81 / 0.38), transparent 60%),
+      linear-gradient(180deg, var(--color-night), var(--color-night-900));
+  }
+
+  /* Poussière d'étoiles dorée, à poser sur un fond nuit */
+  .stardust {
+    background-image:
+      radial-gradient(1px 1px at 12% 22%, rgb(234 208 138 / 0.7), transparent),
+      radial-gradient(1px 1px at 32% 78%, rgb(234 208 138 / 0.5), transparent),
+      radial-gradient(1.5px 1.5px at 58% 14%, rgb(234 208 138 / 0.6), transparent),
+      radial-gradient(1px 1px at 74% 62%, rgb(255 255 255 / 0.5), transparent),
+      radial-gradient(1px 1px at 88% 30%, rgb(234 208 138 / 0.5), transparent),
+      radial-gradient(1.5px 1.5px at 46% 46%, rgb(255 255 255 / 0.35), transparent),
+      radial-gradient(1px 1px at 6% 64%, rgb(255 255 255 / 0.45), transparent),
+      radial-gradient(1px 1px at 94% 86%, rgb(234 208 138 / 0.5), transparent);
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-bold tracking-[0.2em] uppercase;
+  }
+
+  .field {
+    @apply w-full rounded-lg border border-parchment-300 bg-white px-3.5 py-3 text-ink shadow-[inset_0_1px_2px_rgb(15_27_51/0.05)] outline-none transition placeholder:text-ink-soft/45 hover:border-gold/60 focus:border-gold focus:ring-4 focus:ring-gold/20;
+  }
+  .field[aria-invalid='true'] {
+    @apply border-ruby/60 focus:ring-ruby/15;
+  }
+}

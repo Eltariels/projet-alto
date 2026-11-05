@@ -1,0 +1,10 @@
+node_modules/
+server/uploads/
+dist/
+.env
+*.log
+.DS_Store
+.idea/
+
+# Configuration locale de l outil Claude Code (aperçu)
+.claude/

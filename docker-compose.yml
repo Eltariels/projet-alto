@@ -1,0 +1,22 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: alto-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - alto-mongo-data:/data/db
+
+  # Serveur e-mail de développement : reçoit tous les e-mails envoyés par l'API sans les distribuer.
+  # Boîte de réception lisible sur http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    container_name: alto-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # interface web
+
+volumes:
+  alto-mongo-data:
