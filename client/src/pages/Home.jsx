@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePageTitle } from '../lib/usePageTitle.js';
 import { Badge, Corners, Divider, Eyebrow, Medallion, ScoreRing, SectionTitle } from '../components/Ornament.jsx';
@@ -161,6 +161,9 @@ export default function Home() {
   const promo = params.get('promo');
   usePageTitle();
   const { user } = useAuth();
+
+  // L'accueil parle aux étudiants : un compte entreprise retrouve directement ses offres
+  if (user?.role === 'entreprise') return <Navigate to="/entreprise" replace />;
 
   // Connecté, l'étudiant est renvoyé vers son espace plutôt que vers l'inscription
   const primary = user
@@ -349,6 +352,14 @@ export default function Home() {
               {primary.label}
               <ArrowIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
+            {!user && (
+              <p className="mt-8 text-sm text-parchment/60">
+                Vous recrutez un alternant ?{' '}
+                <Link to="/entreprise/inscription" className="font-semibold text-gold-light underline-offset-4 hover:underline">
+                  Publiez votre offre sur ALTO
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </section>

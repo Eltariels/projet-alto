@@ -29,13 +29,19 @@ export function AuthProvider({ children }) {
     setUser(data.user);
   }, []);
 
+  // Espace entreprise : nom, SIRET, e-mail et mot de passe
+  const registerCompany = useCallback(async (payload) => {
+    const data = await api.post('/entreprise/inscription', payload);
+    setUser(data.user);
+  }, []);
+
   const logout = useCallback(async () => {
     await api.post('/auth/logout');
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, register, registerCompany, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,6 +4,7 @@ import { usePageTitle } from '../lib/usePageTitle.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import AuthLayout, { Field, FormError, PasswordField, SubmitButton } from '../components/AuthLayout.jsx';
 import { ArrowIcon } from '../components/Icons.jsx';
+import { afterLogin } from '../lib/roles.js';
 
 export default function Login() {
   usePageTitle('Connexion');
@@ -14,8 +15,8 @@ export default function Login() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Après connexion : l'accueil, sauf si on avait été renvoyé ici depuis une page protégée (on y retourne)
-  if (user) return <Navigate to={state?.from || '/'} replace />;
+  // Après connexion : l'accueil de son espace, sauf si on avait été renvoyé ici depuis une page protégée (on y retourne)
+  if (user) return <Navigate to={afterLogin(user, state?.from)} replace />;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -82,6 +83,12 @@ export default function Login() {
           Crée-le en 2 minutes
         </Link>
       </div>
+      <p className="mt-4 text-center text-sm text-ink-soft">
+        Vous recrutez un alternant ?{' '}
+        <Link to="/entreprise/inscription" className="font-bold text-azure underline-offset-4 hover:text-night hover:underline">
+          Créez votre espace entreprise
+        </Link>
+      </p>
     </AuthLayout>
   );
 }

@@ -148,6 +148,13 @@ router.get('/:id', async (req, res) => {
       ...toSummary(offer, scoring, meta(offer)),
       description: offer.description,
       experienceRequise: offer.experienceRequise,
+      // Fiche de poste des offres publiées par une entreprise inscrite
+      contrat: offer.contrat || null,
+      duree: offer.duree || null,
+      missions: offer.missions || [],
+      profilRecherche: offer.profilRecherche || null,
+      remuneration: offer.remuneration || null,
+      formation: offer.analysis?.criteria?.formation || null,
       sourceUrl: offer.source?.url || null,
       siretStatus: offer.siretCheck?.status,
       matches: scoring.matches,

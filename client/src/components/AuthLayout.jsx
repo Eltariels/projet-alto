@@ -9,7 +9,7 @@ const PERKS = [
 ];
 
 // Écran partagé : panneau d'ambiance à gauche (desktop), formulaire sur parchemin à droite
-export default function AuthLayout({ eyebrow, title, subtitle, aside, children }) {
+export default function AuthLayout({ eyebrow, title, subtitle, aside, perks = PERKS, children }) {
   return (
     // Le fond est coupé en deux sur toute la largeur, mais le contenu suit la grille de l'en-tête (max-w-6xl) :
     // tout reste aligné, du portable à l'ultrawide
@@ -31,7 +31,7 @@ export default function AuthLayout({ eyebrow, title, subtitle, aside, children }
             <Divider className="mt-6 max-w-48" />
 
             <ul className="mt-10 space-y-5">
-              {PERKS.map(({ icon: Icon, title: t, text }) => (
+              {perks.map(({ icon: Icon, title: t, text }) => (
                 <li key={t} className="flex items-center gap-4">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-gold/35 bg-gold/10 text-gold-light">
                     <Icon className="h-5 w-5" />

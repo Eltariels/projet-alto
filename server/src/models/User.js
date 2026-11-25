@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema(
     // Renseignés via le lien d'invitation de promo (mesure du coût par canal)
     school: { type: mongoose.Schema.Types.ObjectId, ref: 'School' },
     promo: { type: mongoose.Schema.Types.ObjectId, ref: 'Promo' },
+    // Compte entreprise : l'entreprise qu'il représente
+    company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
     // Offres mises de côté par l'étudiant
     favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Offer' }],
     // Mot de passe oublié : on ne stocke que l'empreinte du jeton envoyé par e-mail
@@ -19,7 +21,7 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.methods.toPublic = function toPublic() {
-  return { id: this._id, email: this.email, role: this.role, school: this.school, promo: this.promo };
+  return { id: this._id, email: this.email, role: this.role, school: this.school, promo: this.promo, company: this.company };
 };
 
 export const User = mongoose.model('User', userSchema);

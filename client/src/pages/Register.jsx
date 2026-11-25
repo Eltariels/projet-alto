@@ -10,6 +10,7 @@ import AuthLayout, {
   SubmitButton,
 } from '../components/AuthLayout.jsx';
 import { ArrowIcon, CheckIcon } from '../components/Icons.jsx';
+import { homeFor } from '../lib/roles.js';
 
 // L'inscription se fait en deux temps : le compte ici, puis le profil
 function Steps() {
@@ -38,8 +39,8 @@ export default function Register() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Après inscription : l'accueil
-  if (user) return <Navigate to="/" replace />;
+  // Après inscription : l'accueil (un compte entreprise déjà connecté retrouve son espace)
+  if (user) return <Navigate to={homeFor(user)} replace />;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -112,6 +113,12 @@ export default function Register() {
           Connecte-toi
         </Link>
       </div>
+      <p className="mt-4 text-center text-xs text-ink-soft">
+        Vous recrutez ?{' '}
+        <Link to="/entreprise/inscription" className="font-semibold text-azure underline-offset-4 hover:text-night hover:underline">
+          Espace entreprise
+        </Link>
+      </p>
     </AuthLayout>
   );
 }

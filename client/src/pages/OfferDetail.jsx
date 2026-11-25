@@ -248,8 +248,41 @@ export default function OfferDetail() {
 
           <Divider className="my-8" />
 
-          <h2 className="eyebrow text-gold-dark">L'offre</h2>
-          <p className="mt-3 whitespace-pre-line leading-relaxed text-ink">{offer.description}</p>
+          {offer.missions?.length > 0 ? (
+            <>
+              <h2 className="eyebrow text-gold-dark">Les missions</h2>
+              <ul className="mt-3 list-disc space-y-1.5 pl-5 leading-relaxed text-ink">
+                {offer.missions.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+              {offer.profilRecherche && (
+                <>
+                  <h2 className="eyebrow mt-8 text-gold-dark">Profil recherché</h2>
+                  <p className="mt-3 leading-relaxed text-ink">{offer.profilRecherche}</p>
+                </>
+              )}
+              {(offer.contrat || offer.duree || offer.remuneration) && (
+                <>
+                  <h2 className="eyebrow mt-8 text-gold-dark">Le contrat</h2>
+                  <p className="mt-3 leading-relaxed text-ink">
+                    {[
+                      offer.contrat && (offer.contrat === 'apprentissage' ? "Contrat d'apprentissage" : 'Contrat de professionnalisation'),
+                      offer.duree,
+                      offer.remuneration && `Rémunération : ${offer.remuneration}`,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <h2 className="eyebrow text-gold-dark">L'offre</h2>
+              <p className="mt-3 whitespace-pre-line leading-relaxed text-ink">{offer.description}</p>
+            </>
+          )}
 
           {offer.experienceRequise && (
             <>

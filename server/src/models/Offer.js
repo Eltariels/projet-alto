@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { BADGES, NIVEAUX } from './constants.js';
+import { BADGES, CONTRATS, NIVEAUX, SIRET_STATUSES } from './constants.js';
 
 const criteriaSchema = new mongoose.Schema(
   {
@@ -25,25 +25,49 @@ const offerSchema = new mongoose.Schema(
     experienceRequise: String,
     description: String,
 
+    // Fiche de poste (remplie par l'entreprise, avec l'aide de l'IA)
+    contrat: { type: String, enum: CONTRATS },
+    duree: String,
+    missions: [String],
+    profilRecherche: String,
+    remuneration: String,
+
+    // Le texte de l'annonce tel qu'il a été publié ou importé, avant toute mise en forme
+    rawText: String,
+
+    // Offre publiée par une entreprise inscrite sur ALTO
+    company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
+    publishedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
     source: {
-      name: { type: String, enum: ['demo', 'labonnealternance', 'partenaire'], default: 'demo' },
+      name: { type: String, enum: ['demo', 'labonnealternance', 'partenaire', 'entreprise'], default: 'demo' },
       externalId: String,
       url: String,
     },
 
-    // Rempli une seule fois par offre, par la tâche planifiée (IA) ou les règles simples en repli
+    // Rempli à l'arrivée de l'offre, par l'IA ou les règles simples en repli
     analysis: {
       status: { type: String, enum: ['en_attente', 'analysee', 'echec'], default: 'en_attente' },
       method: { type: String, enum: ['regles', 'ia'] },
       badge: { type: String, enum: BADGES },
       reason: String,
       criteria: criteriaSchema,
+      // Les trois signes d'une fausse offre, et l'expérience exigée, tels que l'IA les a relevés
+      signs: {
+        ecole: Boolean,
+        entrepriseNonNommee: Boolean,
+        inscriptionObligatoire: Boolean,
+        experienceExigee: Boolean,
+      },
+      model: String,
+      error: String, // dernier échec, pour le recettage
+      attempts: { type: Number, default: 0 },
       analyzedAt: Date,
     },
 
     // Contrôle Sirene : pas de badge « Vérifiée » tant que le SIRET n'est pas validé
     siretCheck: {
-      status: { type: String, enum: ['non_verifie', 'valide', 'invalide'], default: 'non_verifie' },
+      status: { type: String, enum: SIRET_STATUSES, default: 'non_verifie' },
       checkedAt: Date,
     },
 
@@ -54,5 +78,6 @@ const offerSchema = new mongoose.Schema(
 
 offerSchema.index({ 'source.name': 1, 'source.externalId': 1 }, { unique: true, sparse: true });
 offerSchema.index({ secteur: 1, ville: 1, niveau: 1 });
+offerSchema.index({ company: 1, createdAt: -1 });
 
 export const Offer = mongoose.model('Offer', offerSchema);

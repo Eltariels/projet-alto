@@ -198,7 +198,10 @@ function ApplicationRow({ app, onUpdate }) {
                     aria-hidden="true"
                   />
                   <StatusPill status={h.status} />
-                  <p className="mt-1 text-xs text-ink-soft">{formatDateTime(h.at)}</p>
+                  <p className="mt-1 text-xs text-ink-soft">
+                    {formatDateTime(h.at)}
+                    {h.by === 'entreprise' && " · par l'entreprise"}
+                  </p>
                 </li>
               ))}
             </ol>

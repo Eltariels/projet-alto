@@ -55,7 +55,7 @@ router.post('/', async (req, res) => {
     user: user._id,
     offer: offer._id,
     score: computeScore(profile, offer).score,
-    history: [{ status: 'envoyee', at: new Date() }],
+    history: [{ status: 'envoyee', at: new Date(), by: 'etudiant' }],
     profileSnapshot: {
       email: user.email,
       formation,
@@ -108,7 +108,7 @@ router.patch('/:id', async (req, res) => {
   if (status && status !== app.status) {
     if (!app.history?.length) app.history = [{ status: 'envoyee', at: app.createdAt }];
     app.status = status;
-    app.history.push({ status, at: new Date() });
+    app.history.push({ status, at: new Date(), by: 'etudiant' });
   }
   await app.save();
 

@@ -27,6 +27,9 @@ export const env = {
   // Envoi d'e-mails : sans SMTP_URL, les e-mails sont affichés dans la console (développement)
   smtpUrl: process.env.SMTP_URL || '',
   mailFrom: process.env.MAIL_FROM || 'ALTO <no-reply@alto.local>',
+  // IA (Claude) : sans clé, la mise en forme est indisponible et les nouvelles offres restent « Analyse en attente »
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+  aiModel: process.env.ALTO_AI_MODEL || 'claude-opus-5-5',
   isProd,
   isTest: process.env.NODE_ENV === 'test',
 };

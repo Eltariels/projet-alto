@@ -5,4 +5,6 @@ export { Application } from './Application.js';
 export { School } from './School.js';
 export { Promo } from './Promo.js';
 export { Event } from './Event.js';
+export { Company } from './Company.js';
+export { AiRun } from './AiRun.js';
 export * from './constants.js';

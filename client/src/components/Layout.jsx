@@ -4,13 +4,21 @@ import { useAuth } from '../context/AuthContext.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import VisitCounter from './VisitCounter.jsx';
 import { Divider, Logo } from './Ornament.jsx';
-import { BriefcaseIcon, ListIcon, UserIcon } from './Icons.jsx';
+import { BriefcaseIcon, ListIcon, PlusIcon, UserIcon } from './Icons.jsx';
 
-const APP_LINKS = [
+const STUDENT_LINKS = [
   { to: '/offres', label: 'Offres', icon: BriefcaseIcon },
   { to: '/candidatures', label: 'Candidatures', icon: ListIcon },
   { to: '/profil', label: 'Profil', icon: UserIcon },
 ];
+
+// « end » : « Mes offres » n'est pas surligné quand on est sur « Publier une offre »
+const COMPANY_LINKS = [
+  { to: '/entreprise', label: 'Mes offres', icon: BriefcaseIcon, end: true },
+  { to: '/entreprise/offres/nouvelle', label: 'Publier une offre', short: 'Publier', icon: PlusIcon },
+];
+
+const linksFor = (user) => (user?.role === 'entreprise' ? COMPANY_LINKS : STUDENT_LINKS);
 
 // Lien de navigation avec un filet or qui se déploie sous l'élément actif
 const navClass = ({ isActive }) =>
@@ -20,18 +28,19 @@ const navClass = ({ isActive }) =>
       : 'text-parchment/75 after:scale-x-0 hover:text-parchment hover:after:scale-x-100'
   }`;
 
-// Sur téléphone, l'espace étudiant se parcourt avec une barre d'onglets au pouce
-function MobileTabBar() {
+// Sur téléphone, chaque espace se parcourt avec une barre d'onglets au pouce
+function MobileTabBar({ links }) {
   return (
     <nav
       aria-label="Navigation principale"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-gold/25 bg-night/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden"
     >
-      <ul className="grid grid-cols-3">
-        {APP_LINKS.map(({ to, label, icon: Icon }) => (
+      <ul className={`grid ${links.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        {links.map(({ to, label, short, end, icon: Icon }) => (
           <li key={to}>
             <NavLink
               to={to}
+              end={end}
               className={({ isActive }) =>
                 `relative flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-semibold transition ${
                   isActive ? 'text-gold-light' : 'text-parchment/60 active:text-parchment'
@@ -45,7 +54,7 @@ function MobileTabBar() {
                     aria-hidden="true"
                   />
                   <Icon className="h-5 w-5" />
-                  {label}
+                  {short || label}
                 </>
               )}
             </NavLink>
@@ -58,6 +67,8 @@ function MobileTabBar() {
 
 export default function Layout() {
   const { user } = useAuth();
+  const links = linksFor(user);
+  const company = user?.role === 'entreprise';
   const { pathname } = useLocation();
   const [scrolled, setScrolled] = useState(false);
 
@@ -90,13 +101,18 @@ export default function Layout() {
         }`}
       >
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Link to="/" aria-label="ALTO, accueil" className="shrink-0 rounded-md">
+          <Link to={company ? '/entreprise' : '/'} aria-label="ALTO, accueil" className="flex shrink-0 items-center gap-3 rounded-md">
             <Logo />
+            {company && (
+              <span className="hidden rounded-full border border-gold/30 px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-gold-light uppercase sm:inline">
+                Entreprise
+              </span>
+            )}
           </Link>
           {user ? (
             <nav className="hidden gap-7 sm:flex" aria-label="Navigation principale">
-              {APP_LINKS.map((l) => (
-                <NavLink key={l.to} to={l.to} className={navClass}>
+              {links.map((l) => (
+                <NavLink key={l.to} to={l.to} end={l.end} className={navClass}>
                   {l.label}
                 </NavLink>
               ))}
@@ -104,7 +120,7 @@ export default function Layout() {
           ) : (
             <nav className="flex items-center gap-5" aria-label="Navigation principale">
               <NavLink to="/connexion" className={navClass}>Connexion</NavLink>
-              {pathname !== '/inscription' && (
+              {!['/inscription', '/entreprise/inscription'].includes(pathname) && (
                 <Link to="/inscription" className="btn-gold hidden px-4 py-2 text-sm sm:inline-flex">
                   Créer mon compte
                 </Link>
@@ -132,8 +148,13 @@ export default function Layout() {
             </p>
           </div>
           <nav className="flex flex-col gap-2 text-sm sm:items-end" aria-label="Liens du pied de page">
-            <span className="eyebrow mb-1 text-gold-light/80">Ton espace</span>
-            {user ? (
+            <span className="eyebrow mb-1 text-gold-light/80">{company ? 'Votre espace' : 'Ton espace'}</span>
+            {company ? (
+              <>
+                <Link to="/entreprise" className="transition hover:text-gold-light">Mes offres</Link>
+                <Link to="/entreprise/offres/nouvelle" className="transition hover:text-gold-light">Publier une offre</Link>
+              </>
+            ) : user ? (
               <>
                 <Link to="/offres" className="transition hover:text-gold-light">Offres</Link>
                 <Link to="/candidatures" className="transition hover:text-gold-light">Mes candidatures</Link>
@@ -143,6 +164,7 @@ export default function Layout() {
               <>
                 <Link to="/inscription" className="transition hover:text-gold-light">Créer mon compte</Link>
                 <Link to="/connexion" className="transition hover:text-gold-light">Me connecter</Link>
+                <Link to="/entreprise/inscription" className="transition hover:text-gold-light">Vous recrutez ? Espace entreprise</Link>
               </>
             )}
           </nav>
@@ -155,7 +177,7 @@ export default function Layout() {
         </div>
       </footer>
 
-      {user && <MobileTabBar />}
+      {user && <MobileTabBar links={links} />}
     </div>
   );
 }

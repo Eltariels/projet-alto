@@ -18,6 +18,8 @@ const applicationSchema = new mongoose.Schema(
         _id: false,
         status: { type: String, enum: APPLICATION_STATUSES, required: true },
         at: { type: Date, default: Date.now },
+        // Qui a changé le statut : l'étudiant (son suivi) ou l'entreprise (sa réponse)
+        by: { type: String, enum: ['etudiant', 'entreprise'] },
       },
     ],
   },
@@ -25,5 +27,6 @@ const applicationSchema = new mongoose.Schema(
 );
 
 applicationSchema.index({ user: 1, offer: 1 }, { unique: true });
+applicationSchema.index({ offer: 1, createdAt: 1 });
 
 export const Application = mongoose.model('Application', applicationSchema);

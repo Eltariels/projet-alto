@@ -16,6 +16,9 @@ npm run db:seed                      # 18 offres de démonstration
 npm run dev                          # API sur :4000, front sur :5173
 ```
 
+Pour l'IA (mise en forme et vérification des offres), ajouter `ANTHROPIC_API_KEY=…` dans `server/.env` : sans clé,
+tout fonctionne, mais les offres publiées par les entreprises restent « Analyse en attente ».
+
 Le front proxifie `/api` vers l'API : ouvrir http://localhost:5173.
 
 ## Commandes utiles
@@ -27,6 +30,8 @@ Le front proxifie `/api` vers l'API : ouvrir http://localhost:5173.
 | `npm run db:seed` | Recrée les offres de démonstration |
 | `npm run mail:test -- adresse` | Envoie un e-mail de test |
 | `npm run build`   | Build du front |
+| `npm run ia:essai` | Essai réel de l'IA sur six annonces types (quiz A et B, nos trois signes…) : badge obtenu, durée, coût |
+| `npm run ia:bilan` | Bilan du journal de l'IA pour le recettage : appels, échecs, coût, offres « Analyse en attente » (`-- 7` pour 7 jours) |
 
 ## Organisation
 
@@ -34,13 +39,15 @@ Le front proxifie `/api` vers l'API : ouvrir http://localhost:5173.
 client/            React + Vite + Tailwind
   src/pages/       un fichier par écran (accueil, connexion, inscription, mot de passe oublié,
                    réinitialisation, profil, offres, détail, candidatures, 404)
+  src/pages/company/  l'espace entreprise : inscription, mes offres, publier une offre, offre et candidats
   src/lib/api.js   appels à l'API (cookie JWT inclus)
 server/            Express + Mongoose
-  src/models/      users, profiles, offers, applications, schools, promos, events
-  src/routes/      health, auth, profile, offers, applications
+  src/models/      users, profiles, offers, applications, schools, promos, events, companies, airuns
+  src/routes/      health, auth, profile, offers, applications, company (espace entreprise)
+  src/ai/          offerAi (les deux appels à Claude), review (du verdict de l'IA au badge)
   src/middleware/  requireAuth, requireRole, limitation des tentatives, gestion d'erreurs
-  src/utils/       score (+ synonymes de compétences), analyse des offres, e-mails, fichiers
-  src/scripts/     seed (offres de démo), kpi
+  src/utils/       score (+ synonymes de compétences), analyse des offres, e-mails, fichiers, sirene (SIRET)
+  src/scripts/     seed (offres de démo), kpi, ia-essai, ia-bilan
   test/            tests de l'API (node:test)
 ```
 
@@ -63,6 +70,14 @@ server/            Express + Mongoose
 | POST    | `/api/applications`  | étudiant (`offerId`, profil complet requis) |
 | GET     | `/api/applications`  | étudiant |
 | PATCH   | `/api/applications/:id` | étudiant (`status` : envoyee, vue, entretien, refusee, acceptee, retiree ; et/ou `note`) |
+| POST    | `/api/entreprise/inscription` | public (`companyName`, `siret`, `email`, `password` ; SIRET contrôlé dans l'annuaire des entreprises) |
+| GET     | `/api/entreprise/moi` | entreprise (l'entreprise et son contrôle SIRET, `ai` : IA disponible ou non) |
+| POST    | `/api/entreprise/offres/mise-en-forme` | entreprise (`texte` : l'annonce brute → fiche remplie par l'IA, rien n'est enregistré) |
+| POST/GET | `/api/entreprise/offres` | entreprise (publier : fiche + `texte`, puis vérification par l'IA ; lister ses offres et leurs candidats) |
+| GET/PATCH | `/api/entreprise/offres/:id` | entreprise (l'offre et ses candidats ; `active` pour clôturer ou rouvrir) |
+| POST    | `/api/entreprise/offres/:id/analyse` | entreprise (relancer la vérification d'une offre « Analyse en attente ») |
+| GET/PATCH | `/api/entreprise/candidatures/:id` | entreprise (ouvrir une candidature la marque « vue » ; `status` : entretien, refusee, acceptee) |
+| GET     | `/api/entreprise/candidatures/:id/cv` | entreprise (le CV joint à la candidature) |
 
 Le JWT est stocké dans un cookie `httpOnly` (`alto_token`). En production, `JWT_SECRET` doit faire au moins
 32 caractères aléatoires : le serveur refuse de démarrer sinon.
@@ -108,6 +123,8 @@ réglage CORS).
    | `NODE_ENV` | `production` |
    | `SMTP_URL`, `MAIL_FROM` | ceux du fournisseur d'e-mails (Brevo…), sinon les e-mails ne partent pas |
    | `CLIENT_ORIGIN` | facultatif : l'adresse du site si vous utilisez un domaine personnalisé |
+   | `ANTHROPIC_API_KEY` | la clé d'API Claude (console.anthropic.com), sinon les offres restent « Analyse en attente » |
+   | `ALTO_AI_MODEL` | facultatif : `claude-opus-5-5` par défaut, `claude-haiku-5-5` pour un coût environ 40 fois moindre |
 
 4. **Offres de démonstration** : mettre l'adresse Atlas dans `server/.env.atlas` (ligne `MONGO_URI=…`, fichier
    ignoré par Git), puis lancer une fois `npm run seed:atlas -w server`.
@@ -123,3 +140,40 @@ Le badge vient des règles de `server/src/utils/analysis.js`, le score de `serve
 (formation 30, niveau 20, compétences 30, ville 10, rythme 10). Les compétences sont comparées avec leurs
 synonymes (`server/src/utils/skills.js` : « JS » = « JavaScript », « nodejs » = « Node.js »…), et les
 abréviations de formation sont reconnues (« BUT info » = informatique).
+
+## Espace entreprise
+
+Une entreprise crée son espace avec son SIRET (`/entreprise/inscription`). Le SIRET est contrôlé dans l'annuaire des
+entreprises de l'État (API publique `recherche-entreprises.api.gouv.fr`, données INSEE, sans clé) : un SIRET inconnu ou
+fermé est refusé ; si l'annuaire ne répond pas, l'inscription passe et le contrôle est refait avant chaque publication.
+Un SIRET n'ouvre qu'un espace, pour qu'on ne puisse pas rejoindre une entreprise et voir ses candidats.
+
+Publier une offre se fait en trois temps : l'entreprise colle son annonce telle qu'elle l'a rédigée, l'IA en fait une
+fiche (champs manquants signalés), l'entreprise relit puis publie ; la vérification donne alors le badge. Elle peut aussi
+remplir la fiche sans l'IA. Sur la page de l'offre, elle voit ses candidats classés par score ; ouvrir une candidature
+la marque « Vue » et montre les coordonnées et le CV ; « Proposer un entretien », « Recruter » et « Refuser » apparaissent
+dans le suivi de l'étudiant (« par l'entreprise »), et un entretien compte dans la North Star.
+
+Limite connue du prototype : rien ne prouve encore que la personne qui s'inscrit travaille dans l'entreprise du SIRET.
+
+## IA (Claude)
+
+À l'arrivée de chaque offre, deux appels à Claude, l'un après l'autre (`server/src/ai/offerAi.js`) :
+
+1. **Mise en forme** : à partir du texte brut de l'annonce, des champs propres (titre, entreprise, ville, contrat et
+   durée, rythme, niveau, missions, profil, formation, compétences, expérience, rémunération) et la liste des manquants.
+2. **Vérification** : le verdict (« verifiee », « suspecte », « experience_exigee » ou « indetermine »), les trois signes
+   (publiée par une école, entreprise non nommée, inscription obligatoire), l'expérience exigée et la raison.
+
+L'IA reçoit le texte de l'annonce, le nom de l'émetteur et ce que l'annuaire dit de son SIRET (actif ou non, activité :
+un code NAF en 85 signale l'enseignement) ; la vérification reçoit en plus la fiche. Les réponses sont du JSON contraint
+par un schéma (structured outputs), validé par zod. `server/src/ai/review.js` en tire le badge avec deux garde-fous :
+un signe de fausse offre l'emporte toujours, et « Vérifiée » exige un SIRET contrôlé.
+
+Si l'appel échoue (annonce trop vague, service injoignable, délai dépassé, format invalide, refus), l'offre garde son
+texte et le badge « Analyse en attente », jamais « Vérifiée » par défaut ; l'entreprise peut relancer la vérification.
+Chaque appel est noté dans la collection `airuns` (durée, jetons, résultat ou erreur) : `npm run ia:bilan` en fait le
+bilan pour le recettage du 15 décembre, et `npm run ia:essai` mesure la qualité et le coût sur six annonces types.
+
+Le modèle se choisit avec `ALTO_AI_MODEL` (Claude Opus 5.5 par défaut). Un appel fait pendant une requête est coupé à
+45 s, sous la limite de 60 s des fonctions Vercel (`vercel.json`). Chaque compte entreprise est limité à 40 appels par heure.
