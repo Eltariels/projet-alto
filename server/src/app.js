@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.js';
 import profileRoutes from './routes/profile.js';
 import offerRoutes from './routes/offers.js';
 import applicationRoutes from './routes/applications.js';
+import statsRoutes from './routes/stats.js';
 import { notFound, errorHandler } from './middleware/error.js';
 
 export function createApp() {
@@ -27,6 +28,7 @@ export function createApp() {
   app.use('/api/profile', profileRoutes);
   app.use('/api/offers', offerRoutes);
   app.use('/api/applications', applicationRoutes);
+  app.use('/api/stats', statsRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

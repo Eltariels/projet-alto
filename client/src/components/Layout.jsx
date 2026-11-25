@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
+import VisitCounter from './VisitCounter.jsx';
 import { Divider, Logo } from './Ornament.jsx';
 import { BriefcaseIcon, ListIcon, UserIcon } from './Icons.jsx';
 
@@ -147,7 +148,10 @@ export default function Layout() {
           </nav>
         </div>
         <div className="border-t border-white/5">
-          <p className="mx-auto max-w-6xl px-4 py-4 text-xs text-parchment/40 sm:px-6">© {new Date().getFullYear()} ALTO</p>
+          <p className="mx-auto flex max-w-6xl justify-between gap-4 px-4 py-4 text-xs text-parchment/40 sm:px-6">
+            <span>© {new Date().getFullYear()} ALTO</span>
+            <VisitCounter />
+          </p>
         </div>
       </footer>
 

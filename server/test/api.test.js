@@ -307,3 +307,13 @@ describe('candidatures', () => {
     assert.equal((await c.post('/api/applications', { offerId: ids['Data analyst'] })).status, 400);
   });
 });
+
+describe('compteur de visites', () => {
+  test('chaque visite ajoute 1, la lecture ne compte pas', async () => {
+    const c = client();
+    const avant = (await c.get('/api/stats')).data.visits;
+    assert.equal((await c.post('/api/stats/visite')).data.visits, avant + 1);
+    assert.equal((await c.post('/api/stats/visite')).data.visits, avant + 2);
+    assert.equal((await c.get('/api/stats')).data.visits, avant + 2);
+  });
+});
