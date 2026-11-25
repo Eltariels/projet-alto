@@ -317,3 +317,11 @@ describe('compteur de visites', () => {
     assert.equal((await c.get('/api/stats')).data.visits, avant + 2);
   });
 });
+
+describe('compteur d’inscrits', () => {
+  test('une inscription ajoute 1 au nombre d’inscrits', async () => {
+    const avant = (await client().get('/api/stats')).data.users;
+    await student();
+    assert.equal((await client().get('/api/stats')).data.users, avant + 1);
+  });
+});

@@ -3,10 +3,10 @@ import { api } from '../lib/api.js';
 
 const SESSION_KEY = 'alto_visite_comptee';
 
-// Nombre de visites du site, dans le pied de page.
+// Nombre de visites du site et d'étudiants inscrits, dans le pied de page.
 // Une visite = une ouverture du site (onglet) : changer de page ou recharger ne recompte pas.
 export default function VisitCounter() {
-  const [visits, setVisits] = useState(null);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     let counted = false;
@@ -18,8 +18,8 @@ export default function VisitCounter() {
     }
     const request = counted ? api.get('/stats') : api.post('/stats/visite');
     request
-      .then(({ visits: n }) => {
-        setVisits(n);
+      .then(({ visits, users }) => {
+        setStats({ visits, users });
         if (!counted) {
           try {
             sessionStorage.setItem(SESSION_KEY, '1');
@@ -28,13 +28,14 @@ export default function VisitCounter() {
           }
         }
       })
-      .catch(() => setVisits(null)); // compteur facultatif : en cas d'erreur, il ne s'affiche pas
+      .catch(() => setStats(null)); // compteur facultatif : en cas d'erreur, il ne s'affiche pas
   }, []);
 
-  if (visits === null) return null;
+  if (!stats) return null;
+  const n = (x) => x.toLocaleString('fr-FR');
   return (
     <span className="tabular-nums">
-      {visits.toLocaleString('fr-FR')} visite{visits > 1 ? 's' : ''}
+      {n(stats.visits)} visite{stats.visits > 1 ? 's' : ''} · {n(stats.users)} inscrit{stats.users > 1 ? 's' : ''}
     </span>
   );
 }
