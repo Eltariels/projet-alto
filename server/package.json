@@ -7,11 +7,13 @@
     "start": "node --env-file-if-exists=.env src/index.js",
     "seed": "node --env-file-if-exists=.env src/scripts/seed.js",
     "kpi": "node --env-file-if-exists=.env src/scripts/kpi.js",
-    "test": "node --env-file-if-exists=.env --test --test-concurrency=1 test/api.test.js test/entreprise.test.js",
+    "test": "node --env-file-if-exists=.env --test --test-concurrency=1 test/api.test.js test/entreprise.test.js test/admin.test.js",
     "mail:test": "node --env-file-if-exists=.env src/scripts/mail-test.js",
     "seed:atlas": "node --env-file-if-exists=.env --env-file=.env.atlas src/scripts/seed.js",
     "ia:essai": "node --env-file-if-exists=.env src/scripts/ia-essai.js",
-    "ia:bilan": "node --env-file-if-exists=.env src/scripts/ia-bilan.js"
+    "ia:bilan": "node --env-file-if-exists=.env src/scripts/ia-bilan.js",
+    "admin": "node --env-file-if-exists=.env src/scripts/admin.js",
+    "admin:atlas": "node --env-file-if-exists=.env --env-file=.env.atlas src/scripts/admin.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.14.0",

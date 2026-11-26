@@ -32,6 +32,7 @@ Le front proxifie `/api` vers l'API : ouvrir http://localhost:5173.
 | `npm run build`   | Build du front |
 | `npm run ia:essai` | Essai réel de l'IA sur six annonces types (quiz A et B, nos trois signes…) : badge obtenu, durée, coût |
 | `npm run ia:bilan` | Bilan du journal de l'IA pour le recettage : appels, échecs, coût, offres « Analyse en attente » (`-- 7` pour 7 jours) |
+| `npm run admin -- adresse` | Donne le rôle administrateur (back-office `/admin`) ; crée le compte s'il n'existe pas et affiche son mot de passe une fois ; `--retirer` pour l'enlever |
 
 ## Organisation
 
@@ -40,14 +41,15 @@ client/            React + Vite + Tailwind
   src/pages/       un fichier par écran (accueil, connexion, inscription, mot de passe oublié,
                    réinitialisation, profil, offres, détail, candidatures, 404)
   src/pages/company/  l'espace entreprise : inscription, mes offres, publier une offre, offre et candidats
+  src/pages/admin/    le back-office : tableau de bord (visites, inscriptions, liens de promo)
   src/lib/api.js   appels à l'API (cookie JWT inclus)
 server/            Express + Mongoose
   src/models/      users, profiles, offers, applications, schools, promos, events, companies, airuns
-  src/routes/      health, auth, profile, offers, applications, company (espace entreprise)
+  src/routes/      health, auth, profile, offers, applications, company (espace entreprise), admin (back-office)
   src/ai/          offerAi (les deux appels à Claude), review (du verdict de l'IA au badge)
   src/middleware/  requireAuth, requireRole, limitation des tentatives, gestion d'erreurs
   src/utils/       score (+ synonymes de compétences), analyse des offres, e-mails, fichiers, sirene (SIRET)
-  src/scripts/     seed (offres de démo), kpi, ia-essai, ia-bilan
+  src/scripts/     seed (offres de démo), kpi, ia-essai, ia-bilan, admin
   test/            tests de l'API (node:test)
 ```
 
@@ -78,6 +80,7 @@ server/            Express + Mongoose
 | POST    | `/api/entreprise/offres/:id/analyse` | entreprise (relancer la vérification d'une offre « Analyse en attente ») |
 | GET/PATCH | `/api/entreprise/candidatures/:id` | entreprise (ouvrir une candidature la marque « vue » ; `status` : entretien, refusee, acceptee) |
 | GET     | `/api/entreprise/candidatures/:id/cv` | entreprise (le CV joint à la candidature) |
+| GET     | `/api/admin/stats` | administrateur (visites, inscriptions par jour, étudiants par lien de promo, entreprises) |
 
 Le JWT est stocké dans un cookie `httpOnly` (`alto_token`). En production, `JWT_SECRET` doit faire au moins
 32 caractères aléatoires : le serveur refuse de démarrer sinon.
@@ -177,3 +180,14 @@ bilan pour le recettage du 15 décembre, et `npm run ia:essai` mesure la qualit�
 
 Le modèle se choisit avec `ALTO_AI_MODEL` (Claude Opus 5.5 par défaut). Un appel fait pendant une requête est coupé à
 45 s, sous la limite de 60 s des fonctions Vercel (`vercel.json`). Chaque compte entreprise est limité à 40 appels par heure.
+
+## Back-office (administrateurs)
+
+`/admin` est réservé aux comptes administrateurs. Le tableau de bord montre les visites (total, et jour par jour depuis
+la mise en place de ce suivi), les inscriptions des 30 derniers jours (étudiants et entreprises), les étudiants par
+lien de promo avec leurs profils complétés (le relevé par code du protocole de test) et les entreprises (SIRET vérifiés,
+offres en ligne). Le rôle est relu en base à chaque requête : le donner ou le retirer prend effet tout de suite.
+
+Créer un administrateur en local : `npm run admin -- prenom.nom@exemple.fr`. Sur la base en ligne : mettre l'URI Atlas
+dans `server/.env.atlas` (ligne `MONGO_URI=…`, fichier ignoré par Git), puis
+`npm run admin:atlas -w server -- prenom.nom@exemple.fr`. Un compte entreprise ne peut pas devenir administrateur.

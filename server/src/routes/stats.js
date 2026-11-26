@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { rateLimit } from 'express-rate-limit';
 import { env } from '../config/env.js';
 import { User } from '../models/index.js';
+import { parisDay } from '../utils/dates.js';
 
 const router = Router();
 
@@ -28,11 +29,11 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/visite', visitLimiter, async (req, res) => {
-  const doc = await counters().findOneAndUpdate(
-    { _id: 'visites' },
-    { $inc: { count: 1 } },
-    { upsert: true, returnDocument: 'after' },
-  );
+  const [doc] = await Promise.all([
+    counters().findOneAndUpdate({ _id: 'visites' }, { $inc: { count: 1 } }, { upsert: true, returnDocument: 'after' }),
+    // Le même compteur, jour par jour (heure de Paris), pour le back-office
+    counters().updateOne({ _id: `visites:${parisDay()}` }, { $inc: { count: 1 } }, { upsert: true }),
+  ]);
   res.json({ visits: doc?.count ?? 1, users: await inscrits() });
 });
 

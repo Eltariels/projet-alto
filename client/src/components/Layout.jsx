@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import VisitCounter from './VisitCounter.jsx';
 import { Divider, Logo } from './Ornament.jsx';
-import { BriefcaseIcon, ListIcon, PlusIcon, UserIcon } from './Icons.jsx';
+import { BriefcaseIcon, GaugeIcon, ListIcon, PlusIcon, UserIcon } from './Icons.jsx';
+import { homeFor } from '../lib/roles.js';
 
 const STUDENT_LINKS = [
   { to: '/offres', label: 'Offres', icon: BriefcaseIcon },
@@ -18,7 +19,13 @@ const COMPANY_LINKS = [
   { to: '/entreprise/offres/nouvelle', label: 'Publier une offre', short: 'Publier', icon: PlusIcon },
 ];
 
-const linksFor = (user) => (user?.role === 'entreprise' ? COMPANY_LINKS : STUDENT_LINKS);
+const ADMIN_LINKS = [{ to: '/admin', label: 'Tableau de bord', icon: GaugeIcon, end: true }];
+
+const LINKS = { entreprise: COMPANY_LINKS, admin: ADMIN_LINKS };
+const linksFor = (user) => LINKS[user?.role] || STUDENT_LINKS;
+
+// Pastille à côté du logo : dans quel espace on se trouve
+const SPACE_LABEL = { entreprise: 'Entreprise', admin: 'Admin' };
 
 // Lien de navigation avec un filet or qui se déploie sous l'élément actif
 const navClass = ({ isActive }) =>
@@ -69,6 +76,8 @@ export default function Layout() {
   const { user } = useAuth();
   const links = linksFor(user);
   const company = user?.role === 'entreprise';
+  const admin = user?.role === 'admin';
+  const space = SPACE_LABEL[user?.role];
   const { pathname } = useLocation();
   const [scrolled, setScrolled] = useState(false);
 
@@ -85,7 +94,7 @@ export default function Layout() {
   }, [pathname]);
 
   return (
-    <div className={`flex min-h-screen flex-col ${user ? 'pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0' : ''}`}>
+    <div className={`flex min-h-screen flex-col ${user && links.length > 1 ? 'pb-[calc(4rem+env(safe-area-inset-bottom))] sm:pb-0' : ''}`}>
       <a
         href="#contenu"
         className="sr-only z-50 rounded-lg bg-gold px-4 py-2 font-semibold text-night focus:not-sr-only focus:fixed focus:left-4 focus:top-3"
@@ -101,11 +110,11 @@ export default function Layout() {
         }`}
       >
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Link to={company ? '/entreprise' : '/'} aria-label="ALTO, accueil" className="flex shrink-0 items-center gap-3 rounded-md">
+          <Link to={homeFor(user)} aria-label="ALTO, accueil" className="flex shrink-0 items-center gap-3 rounded-md">
             <Logo />
-            {company && (
-              <span className="hidden rounded-full border border-gold/30 px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-gold-light uppercase sm:inline">
-                Entreprise
+            {space && (
+              <span className="rounded-full border border-gold/30 px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-gold-light uppercase">
+                {space}
               </span>
             )}
           </Link>
@@ -148,8 +157,10 @@ export default function Layout() {
             </p>
           </div>
           <nav className="flex flex-col gap-2 text-sm sm:items-end" aria-label="Liens du pied de page">
-            <span className="eyebrow mb-1 text-gold-light/80">{company ? 'Votre espace' : 'Ton espace'}</span>
-            {company ? (
+            <span className="eyebrow mb-1 text-gold-light/80">{company || admin ? 'Votre espace' : 'Ton espace'}</span>
+            {admin ? (
+              <Link to="/admin" className="transition hover:text-gold-light">Tableau de bord</Link>
+            ) : company ? (
               <>
                 <Link to="/entreprise" className="transition hover:text-gold-light">Mes offres</Link>
                 <Link to="/entreprise/offres/nouvelle" className="transition hover:text-gold-light">Publier une offre</Link>
@@ -177,7 +188,7 @@ export default function Layout() {
         </div>
       </footer>
 
-      {user && <MobileTabBar links={links} />}
+      {user && links.length > 1 && <MobileTabBar links={links} />}
     </div>
   );
 }

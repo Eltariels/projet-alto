@@ -15,6 +15,7 @@ import CompanyRegister from './pages/company/CompanyRegister.jsx';
 import CompanyHome from './pages/company/CompanyHome.jsx';
 import PublishOffer from './pages/company/PublishOffer.jsx';
 import CompanyOffer from './pages/company/CompanyOffer.jsx';
+import AdminHome from './pages/admin/AdminHome.jsx';
 
 // Anciennes URL du prototype (/auth et /auth?mode=connexion)
 function LegacyAuthRedirect() {
@@ -46,6 +47,10 @@ export default function App() {
           <Route path="/entreprise" element={<CompanyHome />} />
           <Route path="/entreprise/offres/nouvelle" element={<PublishOffer />} />
           <Route path="/entreprise/offres/:id" element={<CompanyOffer />} />
+        </Route>
+        {/* Back-office */}
+        <Route element={<ProtectedRoute roles={['admin']} />}>
+          <Route path="/admin" element={<AdminHome />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Route>

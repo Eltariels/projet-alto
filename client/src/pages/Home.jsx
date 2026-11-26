@@ -1,6 +1,7 @@
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { usePageTitle } from '../lib/usePageTitle.js';
+import { homeFor } from '../lib/roles.js';
 import { Badge, Corners, Divider, Eyebrow, Medallion, ScoreRing, SectionTitle } from '../components/Ornament.jsx';
 import {
   ArrowIcon,
@@ -162,8 +163,8 @@ export default function Home() {
   usePageTitle();
   const { user } = useAuth();
 
-  // L'accueil parle aux étudiants : un compte entreprise retrouve directement ses offres
-  if (user?.role === 'entreprise') return <Navigate to="/entreprise" replace />;
+  // L'accueil parle aux étudiants : une entreprise retrouve ses offres, un administrateur son tableau de bord
+  if (user?.role === 'entreprise' || user?.role === 'admin') return <Navigate to={homeFor(user)} replace />;
 
   // Connecté, l'étudiant est renvoyé vers son espace plutôt que vers l'inscription
   const primary = user

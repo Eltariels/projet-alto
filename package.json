@@ -17,7 +17,8 @@
     "test": "npm run test -w server",
     "mail:test": "npm run mail:test -w server --",
     "ia:essai": "npm run ia:essai -w server --",
-    "ia:bilan": "npm run ia:bilan -w server --"
+    "ia:bilan": "npm run ia:bilan -w server --",
+    "admin": "npm run admin -w server --"
   },
   "devDependencies": {
     "concurrently": "^10.0.6"

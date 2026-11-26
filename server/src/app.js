@@ -10,6 +10,7 @@ import offerRoutes from './routes/offers.js';
 import applicationRoutes from './routes/applications.js';
 import statsRoutes from './routes/stats.js';
 import companyRoutes from './routes/company.js';
+import adminRoutes from './routes/admin.js';
 import { notFound, errorHandler } from './middleware/error.js';
 
 export function createApp() {
@@ -31,6 +32,7 @@ export function createApp() {
   app.use('/api/applications', applicationRoutes);
   app.use('/api/stats', statsRoutes);
   app.use('/api/entreprise', companyRoutes);
+  app.use('/api/admin', adminRoutes);
 
   app.use(notFound);
   app.use(errorHandler);
